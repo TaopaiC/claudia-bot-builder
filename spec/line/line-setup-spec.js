@@ -40,8 +40,21 @@ describe('Line setup', () => {
       beforeEach(() => {
         handler = api.post.calls.argsFor(0)[1];
       });
+      it('should fail if x line signature does not match', done => {
+        handler({
+          body: singleMessageTemplate,
+          rawBody: '{"events":[{"object":"message","replyToken":"a98h","source":{"userId":"biho98yh","type":"user"},"timestamp":1485969178383,"message":{"type":"text","id":"9fh9u9","text":"hello"}}]}',
+          headers: {'X-Line-Signature': 'dsd'},
+          env: {lineChannelAccessToken: 'QUJD', lineChannelSecret: '54321'}
+        })
+        .catch(err => {
+          expect(err).toBe('X-Line-Signature does not match');
+          return;
+        })
+        .then(done, done.fail);
+      });
       it('breaks down the message and puts it into the parser', () => {
-        handler({body: singleMessageTemplate, env: {lineChannelAccessToken: 'ABC'}});
+        handler({body: singleMessageTemplate, env: {lineChannelAccessToken: 'QUJD'}});
         expect(parser.calls.argsFor(0)[0]).toEqual({
           'replyToken': 'RandomLineReplyToken', 'type': 'message',
           'source':{'type': 'user', 'userId': 'someUserId'},
@@ -65,7 +78,7 @@ describe('Line setup', () => {
       it('responds when the bot resolves', (done) => {
         parser.and.returnValue({replyToken: 'randomToken', text: 'MSG1'});
         botResolve('Yes Yes');
-        handler({body: singleMessageTemplate, env: {lineChannelAccessToken: 'ABC'}}).then((message) => {
+        handler({body: singleMessageTemplate, env: {lineChannelAccessToken: 'QUJD'}}).then((message) => {
           expect(message).toBe('ok');
           expect(responder).toHaveBeenCalledWith('randomToken', 'Yes Yes', 'ABC');
         }).then(done, done.fail);
@@ -73,7 +86,7 @@ describe('Line setup', () => {
       it('can work with bot responses as strings', (done) => {
         bot.and.returnValue('Yes!');
         parser.and.returnValue({replyToken: 'randomToken', text: 'MSG1'});
-        handler({body: singleMessageTemplate, env: {lineChannelAccessToken: 'ABC'}}).then((message) => {
+        handler({body: singleMessageTemplate, env: {lineChannelAccessToken: 'QUJD'}}).then((message) => {
           expect(message).toBe('ok');
           expect(responder).toHaveBeenCalledWith('randomToken', 'Yes!', 'ABC');
         }).then(done, done.fail);
@@ -148,29 +161,59 @@ describe('Line setup', () => {
       const multiMessageTemplate = {
         'events': [
           {
-            'replyToken': 'RandomLineReplyToken',
-            'type': 'message',
+            'object':'message',
+            'replyToken': 'bowe',
             'source': {
-              'type': 'user',
-              'userId': 'someUserId'
+              'userId': 'biho98yh',
+              'type': 'user'
             },
+            'timestamp': 1485969178383,
             'message': {
-              'id': '123',
               'type': 'text',
-              'text': 'Hello Line'
+              'id': '9fh9u9',
+              'text': 'hello'
             }
           },
           {
-            'replyToken': 'RandomLineReplyToken',
-            'type': 'message',
+            'object':'message',
+            'replyToken': 'a98h',
             'source': {
-              'type': 'user',
-              'userId': 'otherUserId'
+              'userId': 'biho98yh',
+              'type': 'user'
             },
+            'timestamp': 1485969178383,
             'message': {
-              'id': '456',
               'type': 'text',
-              'text': 'Bye Line'
+              'id': 'wfnmp23',
+              'text': 'ping'
+            }
+          },
+          {
+            'object':'message',
+            'replyToken': 'codj0',
+            'source': {
+              'userId': 'cff9e9j',
+              'type': 'user'
+            },
+            'timestamp': 1485969178383,
+            'message': {
+              'type': 'text',
+              'id': '9f9uj',
+              'text': 'pong'
+            }
+          },
+          {
+            'object':'message',
+            'replyToken': 'd9ujo',
+            'source': {
+              'userId': 'dujve098',
+              'type': 'user'
+            },
+            'timestamp': 1485969178383,
+            'message': {
+              'type': 'text',
+              'id': '89hnvp',
+              'text': 'got'
             }
           }
         ]
@@ -206,63 +249,97 @@ describe('Line setup', () => {
           return {
             sender: 'sender' + index,
             text: 'text' + index,
-            replyToken: 'RandomLineReplyToken',
+            replyToken: 'replyToken' + index,
             type: 'line'
           };
         });
       });
       it('parses messages in sequence', () => {
-        handler({body: multiMessageTemplate, env: {lineChannelAccessToken: 'ABC'}});
-        expect(parser.calls.count()).toBe(2);
+        handler({body: multiMessageTemplate, env: {lineChannelAccessToken: 'QUJD'}});
+        expect(parser.calls.count()).toBe(4);
         expect(parser.calls.argsFor(0)[0]).toEqual({
-          'replyToken': 'RandomLineReplyToken',
-          'type': 'message',
-          'source':{
-            'type': 'user',
-            'userId': 'someUserId'
+          'object':'message',
+          'replyToken': 'bowe',
+          'source': {
+            'userId': 'biho98yh',
+            'type': 'user'
           },
+          'timestamp': 1485969178383,
           'message': {
-            'id': '123',
             'type': 'text',
-            'text': 'Hello Line'
+            'id': '9fh9u9',
+            'text': 'hello'
           }
         });
         expect(parser.calls.argsFor(1)[0]).toEqual({
-          'replyToken': 'RandomLineReplyToken',
-          'type': 'message',
-          'source':{
-            'type': 'user',
-            'userId': 'otherUserId'
+          'object':'message',
+          'replyToken': 'a98h',
+          'source': {
+            'userId': 'biho98yh',
+            'type': 'user'
           },
+          'timestamp': 1485969178383,
           'message': {
-            'id': '456',
             'type': 'text',
-            'text': 'Bye Line'
+            'id': 'wfnmp23',
+            'text': 'ping'
+          }
+        });
+        expect(parser.calls.argsFor(2)[0]).toEqual({
+          'object':'message',
+          'replyToken': 'codj0',
+          'source': {
+            'userId': 'cff9e9j',
+            'type': 'user'
+          },
+          'timestamp': 1485969178383,
+          'message': {
+            'type': 'text',
+            'id': '9f9uj',
+            'text': 'pong'
+          }
+        });
+        expect(parser.calls.argsFor(3)[0]).toEqual({
+          'object':'message',
+          'replyToken': 'd9ujo',
+          'source': {
+            'userId': 'dujve098',
+            'type': 'user'
+          },
+          'timestamp': 1485969178383,
+          'message': {
+            'type': 'text',
+            'id': '89hnvp',
+            'text': 'got'
           }
         });
       });
       it('calls the bot for each message individually', (done) => {
-        handler({body: multiMessageTemplate, env: {lineChannelAccessToken: 'ABC'}});
+        handler({body: multiMessageTemplate, env: {lineChannelAccessToken: 'QUJD'}});
         Promise.resolve().then(() => {
-          expect(bot.calls.count()).toEqual(2);
-          expect(bot).toHaveBeenCalledWith({sender: 'sender1', text: 'text1', replyToken: 'RandomLineReplyToken', type: 'line'}, {body: multiMessageTemplate, env: {lineChannelAccessToken: 'ABC'}});
-          expect(bot).toHaveBeenCalledWith({sender: 'sender2', text: 'text2', replyToken: 'RandomLineReplyToken', type: 'line'}, {body: multiMessageTemplate, env: {lineChannelAccessToken: 'ABC'}});
+          expect(bot.calls.count()).toEqual(4);
+          expect(bot).toHaveBeenCalledWith({replyToken: 'replyToken1', sender: 'sender1', text: 'text1', type: 'line'}, {body: multiMessageTemplate, env: {lineChannelAccessToken: 'QUJD'}});
+          expect(bot).toHaveBeenCalledWith({replyToken: 'replyToken2', sender: 'sender2', text: 'text2', type: 'line'}, {body: multiMessageTemplate, env: {lineChannelAccessToken: 'QUJD'}});
+          expect(bot).toHaveBeenCalledWith({replyToken: 'replyToken3', sender: 'sender3', text: 'text3', type: 'line'}, {body: multiMessageTemplate, env: {lineChannelAccessToken: 'QUJD'}});
+          expect(bot).toHaveBeenCalledWith({replyToken: 'replyToken4', sender: 'sender4', text: 'text4', type: 'line'}, {body: multiMessageTemplate, env: {lineChannelAccessToken: 'QUJD'}});
         }).then(done, done.fail);
       });
       it('calls the responders for each bot response individually', (done) => {
-        handler({body: multiMessageTemplate, env: {lineChannelAccessToken: 'ABC'}});
+        handler({body: multiMessageTemplate, env: {lineChannelAccessToken: 'QUJD'}});
         Promise.resolve().then(() => {
           botPromises[0].resolve('From first');
           botPromises[1].resolve('From second');
-          return botPromises[1];
+          botPromises[2].resolve('From 3');
+          botPromises[3].resolve('From 4');
+          return botPromises[3];
         }).then(() => {
-          expect(responder).toHaveBeenCalledWith('RandomLineReplyToken', 'From first', 'ABC');
-          expect(responder).toHaveBeenCalledWith('RandomLineReplyToken', 'From second', 'ABC');
+          expect(responder).toHaveBeenCalledWith('replyToken1', 'From first', 'ABC');
+          expect(responder).toHaveBeenCalledWith('replyToken2', 'From second', 'ABC');
         }).then(done, done.fail);
       });
       it('does not resolve until all the responders resolve', (done) => {
         var hasResolved;
-        handler({body: multiMessageTemplate, env: {lineChannelAccessToken: 'ABC'}}).then(() => {
+        handler({body: multiMessageTemplate, env: {lineChannelAccessToken: 'QUJD'}}).then(() => {
           hasResolved = true;
         }).then(done.fail, done.fail);
         Promise.resolve().then(() => {
@@ -276,7 +353,7 @@ describe('Line setup', () => {
         }).then(done, done.fail);
       });
       it('resolves when all the responders resolve', (done) => {
-        handler({body: multiMessageTemplate, env: {lineChannelAccessToken: 'ABC'}}).then((message) => {
+        handler({body: multiMessageTemplate, env: {lineChannelAccessToken: 'QUJD'}}).then((message) => {
           expect(message).toEqual('ok');
         }).then(done, done.fail);
         Promise.resolve().then(() => {
