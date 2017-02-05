@@ -525,22 +525,10 @@ describe('Line format message', () => {
       });
     });
 
-    it('should throw an error if added more than 4 actions', () => {
-      const message = new formatLineMessage.Button('Button text', 'Button alt text');
-      message
-        .addUriAction('label A', 'https://example.com/a')
-        .addUriAction('label A', 'https://example.com/a')
-        .addUriAction('label A', 'https://example.com/a')
-        .addUriAction('label A', 'https://example.com/a');
-
-      expect(() => {
-        message
-          .addUriAction('label A', 'https://example.com/a');
-      }).toThrowError('There can not be more than 4 actions');
-    });
-
     it('should return a simple message object', () => {
       const message = new formatLineMessage.Button('Button text', 'Button alt text')
+        .addTitle('Button Title')
+        .addImage('https://example.com/image')
         .addUriAction('label A', 'https://example.com/a')
         .addMessageAction('label B', 'text B')
         .addPostbackAction('label C', 'data C')
@@ -552,6 +540,8 @@ describe('Line format message', () => {
         template: {
           type: 'buttons',
           text: 'Button text',
+          title: 'Button Title',
+          thumbnailImageUrl: 'https://example.com/image',
           actions: [
             { type: 'uri', label: 'label A', uri: 'https://example.com/a' },
             { type: 'message', label: 'label B', text: 'text B' },
@@ -564,9 +554,348 @@ describe('Line format message', () => {
   });
 
   describe('Confirm', () => {
+    it('should be a class', () => {
+      const message = new formatLineMessage.Confirm('Button text', 'Button alt text');
+
+      expect(typeof formatLineMessage.Confirm).toBe('function');
+      expect(message instanceof formatLineMessage.Confirm).toBeTruthy();
+    });
+
+    it('should throw an error if no action are added', () => {
+      const message = new formatLineMessage.Confirm('Button text', 'Button alt text');
+
+      expect(() => message.get()).toThrowError('Add at least one action first!');
+    });
+
+    it('should throw an error if more than 2 actions are added', () => {
+      const message = new formatLineMessage.Confirm('Button text', 'Button alt text');
+
+      message
+        .addMessageAction('label', 'text')
+        .addMessageAction('label', 'text');
+
+      expect(() => {
+        message.addMessageAction('label', 'text');
+      }).toThrowError('There can not be more than 2 actions');
+    });
+
+    describe('.addUriAction', () => {
+      let message;
+
+      beforeEach(() => {
+        message = new formatLineMessage.Confirm('Button text', 'Button alt text');
+      });
+
+      it('should throw an error if label or url is not valid', () => {
+        expect(() => { message.addUriAction('label', 'text'); }).toThrowError('Action required a uri as a second parameter');
+        expect(() => { message.addUriAction('label'); }).toThrowError('Action required a uri as a second parameter');
+        expect(() => { message.addUriAction(undefined, 'https://example.com/'); }).toThrowError('Action required a label as a first parameter');
+        expect(() => { message.addUriAction(); }).toThrowError('Action required a label as a first parameter');
+      });
+
+      it('should throw an error if url is too long', () => {
+        const longtext = new Array(99).join('0123456789');
+        const longurl = `https://example.com/${longtext}/`;
+
+        expect(longurl.length).toEqual(1001);
+        expect(() => { message.addUriAction('label', longurl); }).toThrowError('Uri can not be more than 1000 characters');
+      });
+
+      it('should throw an error if label is too long', () => {
+        const longtext = new Array(3).join('0123456789') + '1';
+
+        expect(longtext.length).toEqual(21);
+        expect(() => { message.addUriAction(longtext, 'https://example.com/'); }).toThrowError('Label can not be more than 20 characters');
+      });
+
+      it('should add a UriButton', () => {
+        message
+          .addUriAction('label A', 'https://example.com/A');
+
+        expect(message.get()).toEqual({
+          type: 'template',
+          altText: 'Button alt text',
+          template: {
+            type: 'confirm',
+            text: 'Button text',
+            actions: [
+              { type: 'uri', label: 'label A', uri: 'https://example.com/A' }
+            ]
+          }
+        });
+      });
+
+      it('should add two UriButtons', () => {
+        message
+          .addUriAction('label A', 'https://example.com/A')
+          .addUriAction('label B', 'https://example.com/B');
+
+        expect(message.get()).toEqual({
+          type: 'template',
+          altText: 'Button alt text',
+          template: {
+            type: 'confirm',
+            text: 'Button text',
+            actions: [
+              { type: 'uri', label: 'label A', uri: 'https://example.com/A' },
+              { type: 'uri', label: 'label B', uri: 'https://example.com/B' }
+            ]
+          }
+        });
+      });
+    });
+
+    describe('.addMessageAction', () => {
+      let message;
+
+      beforeEach(() => {
+        message = new formatLineMessage.Confirm('Button text', 'Button alt text');
+      });
+
+      it('should throw an error if label or message is not valid', () => {
+        expect(() => { message.addMessageAction('label'); }).toThrowError('Action required a text as a second parameter');
+        expect(() => { message.addMessageAction(undefined, 'text'); }).toThrowError('Action required a label as a first parameter');
+        expect(() => { message.addMessageAction(); }).toThrowError('Action required a label as a first parameter');
+      });
+
+      it('should throw an error if message is too long', () => {
+        const longtext = new Array(31).join('0123456789') + '1';
+
+        expect(longtext.length).toEqual(301);
+        expect(() => { message.addMessageAction('label', longtext); }).toThrowError('Text can not be more than 300 characters');
+      });
+
+      it('should throw an error if label is too long', () => {
+        const longtext = new Array(3).join('0123456789') + '1';
+
+        expect(longtext.length).toEqual(21);
+        expect(() => { message.addMessageAction(longtext, 'text'); }).toThrowError('Label can not be more than 20 characters');
+      });
+
+      it('should add a message button', () => {
+        message
+          .addMessageAction('label A', 'text A');
+
+        expect(message.get()).toEqual({
+          type: 'template',
+          altText: 'Button alt text',
+          template: {
+            type: 'confirm',
+            text: 'Button text',
+            actions: [
+              { type: 'message', label: 'label A', text: 'text A' }
+            ]
+          }
+        });
+      });
+
+      it('should add two message buttons', () => {
+        message
+          .addMessageAction('label A', 'text A')
+          .addMessageAction('label B', 'text B');
+
+        expect(message.get()).toEqual({
+          type: 'template',
+          altText: 'Button alt text',
+          template: {
+            type: 'confirm',
+            text: 'Button text',
+            actions: [
+              { type: 'message', label: 'label A', text: 'text A' },
+              { type: 'message', label: 'label B', text: 'text B' }
+            ]
+          }
+        });
+      });
+    });
+
+    describe('.addPostbackAction', () => {
+      let message;
+
+      beforeEach(() => {
+        message = new formatLineMessage.Confirm('Button text', 'Button alt text');
+      });
+
+      it('should throw an error if label, data, or message is not valid', () => {
+        expect(() => { message.addPostbackAction(); }).toThrowError('Postback action required a label as a first parameter');
+        expect(() => { message.addPostbackAction('label'); }).toThrowError('Postback action required a data as a second parameter');
+        expect(() => { message.addPostbackAction(undefined, 'data'); }).toThrowError('Postback action required a label as a first parameter');
+        expect(() => { message.addPostbackAction('label', 'data', 12); }).toThrowError('Text needs to be a string');
+      });
+
+      it('should throw an error if message is too long', () => {
+        const longtext = new Array(31).join('0123456789') + '1';
+
+        expect(longtext.length).toEqual(301);
+        expect(() => { message.addPostbackAction('label', 'data', longtext); }).toThrowError('Text can not be more than 300 characters');
+      });
+
+      it('should throw an error if data is too long', () => {
+        const longtext = new Array(31).join('0123456789') + '1';
+
+        expect(longtext.length).toEqual(301);
+        expect(() => { message.addPostbackAction('label', longtext); }).toThrowError('Data can not be more than 300 characters');
+      });
+
+      it('should throw an error if label is too long', () => {
+        const longtext = new Array(3).join('0123456789') + '1';
+
+        expect(longtext.length).toEqual(21);
+        expect(() => { message.addPostbackAction(longtext, 'text'); }).toThrowError('Label can not be more than 20 characters');
+      });
+
+      it('should add a postback button', () => {
+        message
+          .addPostbackAction('label A', 'data A', 'text A');
+
+        expect(message.get()).toEqual({
+          type: 'template',
+          altText: 'Button alt text',
+          template: {
+            type: 'confirm',
+            text: 'Button text',
+            actions: [
+              { type: 'postback', label: 'label A', data: 'data A', text: 'text A' }
+            ]
+          }
+        });
+      });
+
+      it('should add two postback buttons', () => {
+        message
+          .addPostbackAction('label A', 'data A', 'text A')
+          .addPostbackAction('label B', 'data B');
+
+        expect(message.get()).toEqual({
+          type: 'template',
+          altText: 'Button alt text',
+          template: {
+            type: 'confirm',
+            text: 'Button text',
+            actions: [
+              { type: 'postback', label: 'label A', data: 'data A', text: 'text A' },
+              { type: 'postback', label: 'label B', data: 'data B' }
+            ]
+          }
+        });
+      });
+    });
+
+    it('should return a simple message object', () => {
+      const message = new formatLineMessage.Confirm('Button text', 'Button alt text')
+        .addUriAction('label A', 'https://example.com/a')
+        .addPostbackAction('label D', 'data D', 'text D');
+
+      expect(message.get()).toEqual({
+        type: 'template',
+        altText: 'Button alt text',
+        template: {
+          type: 'confirm',
+          text: 'Button text',
+          actions: [
+            { type: 'uri', label: 'label A', uri: 'https://example.com/a' },
+            { type: 'postback', label: 'label D', data: 'data D', text: 'text D' }
+          ]
+        }
+      });
+    });
   });
 
   describe('Carousel', () => {
+    it('should be a class', () => {
+      const message = new formatLineMessage.Carousel('Carousel alt text');
+
+      expect(typeof formatLineMessage.Carousel).toBe('function');
+      expect(message instanceof formatLineMessage.Carousel).toBeTruthy();
+    });
+
+    it('should throw an error if no action are added', () => {
+      const message = new formatLineMessage.Carousel('Carousel alt text');
+
+      expect(() => message.get()).toThrowError('Add at least one column first!');
+    });
+
+    it('should throw an error if more than 5 columns are added', () => {
+      const message = new formatLineMessage.Carousel('Carousel alt text');
+
+      message
+        .addColumn('column A')
+        .addColumn('column B')
+        .addColumn('column C')
+        .addColumn('column D')
+        .addColumn('column E');
+
+      expect(() => {
+        message.addColumn('column F');
+      }).toThrowError('There can not be more than 5 columns');
+    });
+
+    describe('.getLastColumn', () => {
+      let message;
+
+      beforeEach(() => {
+        message = new formatLineMessage.Carousel('Carousel alt text');
+      });
+
+      it('should throw an error if no columns added', () => {
+        expect(() => message.getLastColumn()).toThrowError('Add at least one column first!');
+      });
+
+      it('should get last column', () => {
+        message.addColumn('column A');
+        expect(message.getLastColumn().text).toEqual('column A');
+
+        message.addColumn('column B');
+        message.addColumn('column C');
+        expect(message.getLastColumn().text).toEqual('column C');
+        expect(message.getLastColumn().text).toEqual('column C');
+
+        message.addColumn('column D');
+        expect(message.getLastColumn().text).toEqual('column D');
+      });
+    });
+
+    it('should return a simple message object', () => {
+      const message = new formatLineMessage.Carousel('Carousel altText')
+        .addColumn('column A')
+          .addTitle('title A')
+          .addImage('https://example.com/img/a')
+          .addUriAction('Go a', 'https://example.com/a')
+          .addMessageAction('Go a', 'Go go a')
+        .addColumn('column B')
+          .addTitle('title B')
+          .addImage('https://example.com/img/b')
+          .addUriAction('Go b', 'https://example.com/b')
+          .addPostbackAction('Go b', 'Go:go:b', 'Go go b');
+
+      expect(message.get()).toEqual({
+        type: 'template',
+        altText: 'Carousel altText',
+        template: {
+          type: 'carousel',
+          columns: [
+            {
+              text: 'column A',
+              title: 'title A',
+              thumbnailImageUrl: 'https://example.com/img/a',
+              actions: [
+                { type: 'uri', label: 'Go a', uri: 'https://example.com/a' },
+                { type: 'message', label: 'Go a', text: 'Go go a' }
+              ]
+            },
+            {
+              text: 'column B',
+              title: 'title B',
+              thumbnailImageUrl: 'https://example.com/img/b',
+              actions: [
+                { type: 'uri', label: 'Go b', uri: 'https://example.com/b' },
+                { type: 'postback', label: 'Go b', text: 'Go go b', data: 'Go:go:b' }
+              ]
+            }
+          ]
+        }
+      });
+    });
   });
 });
 
