@@ -265,17 +265,17 @@ describe('Line format message', () => {
       const message = new formatLineMessage.Button('Button text', 'Button alt text');
 
       message
-        .addMessageButton('label', 'text')
-        .addMessageButton('label', 'text')
-        .addMessageButton('label', 'text')
-        .addMessageButton('label', 'text');
+        .addMessageAction('label', 'text')
+        .addMessageAction('label', 'text')
+        .addMessageAction('label', 'text')
+        .addMessageAction('label', 'text');
 
       expect(() => {
-        message.addMessageButton('label', 'text');
+        message.addMessageAction('label', 'text');
       }).toThrowError('There can not be more than 4 actions');
     });
 
-    describe('.addUriButton', () => {
+    describe('.addUriAction', () => {
       let message;
 
       beforeEach(() => {
@@ -283,10 +283,10 @@ describe('Line format message', () => {
       });
 
       it('should throw an error if label or url is not valid', () => {
-        expect(() => { message.addUriButton('label', 'text'); }).toThrowError('button required a uri as a second parameter');
-        expect(() => { message.addUriButton('label'); }).toThrowError('button required a uri as a second parameter');
-        expect(() => { message.addUriButton(undefined, 'https://example.com/'); }).toThrowError('button required a label as a first parameter');
-        expect(() => { message.addUriButton(); }).toThrowError('button required a label as a first parameter');
+        expect(() => { message.addUriAction('label', 'text'); }).toThrowError('action required a uri as a second parameter');
+        expect(() => { message.addUriAction('label'); }).toThrowError('action required a uri as a second parameter');
+        expect(() => { message.addUriAction(undefined, 'https://example.com/'); }).toThrowError('action required a label as a first parameter');
+        expect(() => { message.addUriAction(); }).toThrowError('action required a label as a first parameter');
       });
 
       it('should throw an error if url is too long', () => {
@@ -294,19 +294,19 @@ describe('Line format message', () => {
         const longurl = `https://example.com/${longtext}/`;
 
         expect(longurl.length).toEqual(1001);
-        expect(() => { message.addUriButton('label', longurl); }).toThrowError('uri can not be more than 1000 characters');
+        expect(() => { message.addUriAction('label', longurl); }).toThrowError('uri can not be more than 1000 characters');
       });
 
       it('should throw an error if label is too long', () => {
         const longtext = new Array(3).join('0123456789') + '1';
 
         expect(longtext.length).toEqual(21);
-        expect(() => { message.addUriButton(longtext, 'https://example.com/'); }).toThrowError('label can not be more than 20 characters');
+        expect(() => { message.addUriAction(longtext, 'https://example.com/'); }).toThrowError('label can not be more than 20 characters');
       });
 
       it('should add a UriButton', () => {
         message
-          .addUriButton('label A', 'https://example.com/A');
+          .addUriAction('label A', 'https://example.com/A');
 
         expect(message.get()).toEqual({
           type: 'template',
@@ -323,8 +323,8 @@ describe('Line format message', () => {
 
       it('should add two UriButtons', () => {
         message
-          .addUriButton('label A', 'https://example.com/A')
-          .addUriButton('label B', 'https://example.com/B');
+          .addUriAction('label A', 'https://example.com/A')
+          .addUriAction('label B', 'https://example.com/B');
 
         expect(message.get()).toEqual({
           type: 'template',
@@ -341,7 +341,7 @@ describe('Line format message', () => {
       });
     });
 
-    describe('.addMessageButton', () => {
+    describe('.addMessageAction', () => {
       let message;
 
       beforeEach(() => {
@@ -349,28 +349,28 @@ describe('Line format message', () => {
       });
 
       it('should throw an error if label or message is not valid', () => {
-        expect(() => { message.addMessageButton('label'); }).toThrowError('button required a text as a second parameter');
-        expect(() => { message.addMessageButton(undefined, 'text'); }).toThrowError('button required a label as a first parameter');
-        expect(() => { message.addMessageButton(); }).toThrowError('button required a label as a first parameter');
+        expect(() => { message.addMessageAction('label'); }).toThrowError('action required a text as a second parameter');
+        expect(() => { message.addMessageAction(undefined, 'text'); }).toThrowError('action required a label as a first parameter');
+        expect(() => { message.addMessageAction(); }).toThrowError('action required a label as a first parameter');
       });
 
       it('should throw an error if message is too long', () => {
         const longtext = new Array(31).join('0123456789') + '1';
 
         expect(longtext.length).toEqual(301);
-        expect(() => { message.addMessageButton('label', longtext); }).toThrowError('text can not be more than 300 characters');
+        expect(() => { message.addMessageAction('label', longtext); }).toThrowError('text can not be more than 300 characters');
       });
 
       it('should throw an error if label is too long', () => {
         const longtext = new Array(3).join('0123456789') + '1';
 
         expect(longtext.length).toEqual(21);
-        expect(() => { message.addMessageButton(longtext, 'text'); }).toThrowError('label can not be more than 20 characters');
+        expect(() => { message.addMessageAction(longtext, 'text'); }).toThrowError('label can not be more than 20 characters');
       });
 
       it('should add a message button', () => {
         message
-          .addMessageButton('label A', 'text A');
+          .addMessageAction('label A', 'text A');
 
         expect(message.get()).toEqual({
           type: 'template',
@@ -387,8 +387,8 @@ describe('Line format message', () => {
 
       it('should add two message buttons', () => {
         message
-          .addMessageButton('label A', 'text A')
-          .addMessageButton('label B', 'text B');
+          .addMessageAction('label A', 'text A')
+          .addMessageAction('label B', 'text B');
 
         expect(message.get()).toEqual({
           type: 'template',
@@ -405,7 +405,7 @@ describe('Line format message', () => {
       });
     });
 
-    describe('.addPostbackButton', () => {
+    describe('.addPostbackAction', () => {
       let message;
 
       beforeEach(() => {
@@ -413,36 +413,36 @@ describe('Line format message', () => {
       });
 
       it('should throw an error if label, data, or message is not valid', () => {
-        expect(() => { message.addPostbackButton(); }).toThrowError('postback button required a label as a first parameter');
-        expect(() => { message.addPostbackButton('label'); }).toThrowError('postback button required a data as a second parameter');
-        expect(() => { message.addPostbackButton(undefined, 'data'); }).toThrowError('postback button required a label as a first parameter');
-        expect(() => { message.addPostbackButton('label', 'data', 12); }).toThrowError('text needs to be a string');
+        expect(() => { message.addPostbackAction(); }).toThrowError('postback action required a label as a first parameter');
+        expect(() => { message.addPostbackAction('label'); }).toThrowError('postback action required a data as a second parameter');
+        expect(() => { message.addPostbackAction(undefined, 'data'); }).toThrowError('postback action required a label as a first parameter');
+        expect(() => { message.addPostbackAction('label', 'data', 12); }).toThrowError('text needs to be a string');
       });
 
       it('should throw an error if message is too long', () => {
         const longtext = new Array(31).join('0123456789') + '1';
 
         expect(longtext.length).toEqual(301);
-        expect(() => { message.addPostbackButton('label', 'data', longtext); }).toThrowError('text can not be more than 300 characters');
+        expect(() => { message.addPostbackAction('label', 'data', longtext); }).toThrowError('text can not be more than 300 characters');
       });
 
       it('should throw an error if data is too long', () => {
         const longtext = new Array(31).join('0123456789') + '1';
 
         expect(longtext.length).toEqual(301);
-        expect(() => { message.addPostbackButton('label', longtext); }).toThrowError('data can not be more than 300 characters');
+        expect(() => { message.addPostbackAction('label', longtext); }).toThrowError('data can not be more than 300 characters');
       });
 
       it('should throw an error if label is too long', () => {
         const longtext = new Array(3).join('0123456789') + '1';
 
         expect(longtext.length).toEqual(21);
-        expect(() => { message.addPostbackButton(longtext, 'text'); }).toThrowError('label can not be more than 20 characters');
+        expect(() => { message.addPostbackAction(longtext, 'text'); }).toThrowError('label can not be more than 20 characters');
       });
 
       it('should add a postback button', () => {
         message
-          .addPostbackButton('label A', 'data A', 'text A');
+          .addPostbackAction('label A', 'data A', 'text A');
 
         expect(message.get()).toEqual({
           type: 'template',
@@ -459,8 +459,8 @@ describe('Line format message', () => {
 
       it('should add two postback buttons', () => {
         message
-          .addPostbackButton('label A', 'data A', 'text A')
-          .addPostbackButton('label B', 'data B');
+          .addPostbackAction('label A', 'data A', 'text A')
+          .addPostbackAction('label B', 'data B');
 
         expect(message.get()).toEqual({
           type: 'template',
@@ -480,23 +480,23 @@ describe('Line format message', () => {
     it('should throw an error if added more than 4 actions', () => {
       const message = new formatLineMessage.Button('Button text', 'Button alt text');
       message
-        .addUriButton('label A', 'https://example.com/a')
-        .addUriButton('label A', 'https://example.com/a')
-        .addUriButton('label A', 'https://example.com/a')
-        .addUriButton('label A', 'https://example.com/a');
+        .addUriAction('label A', 'https://example.com/a')
+        .addUriAction('label A', 'https://example.com/a')
+        .addUriAction('label A', 'https://example.com/a')
+        .addUriAction('label A', 'https://example.com/a');
 
       expect(() => {
         message
-          .addUriButton('label A', 'https://example.com/a');
+          .addUriAction('label A', 'https://example.com/a');
       }).toThrowError('There can not be more than 4 actions');
     });
 
     it('should return a simple message object', () => {
       const message = new formatLineMessage.Button('Button text', 'Button alt text')
-        .addUriButton('label A', 'https://example.com/a')
-        .addMessageButton('label B', 'text B')
-        .addPostbackButton('label C', 'data C')
-        .addPostbackButton('label D', 'data D', 'text D');
+        .addUriAction('label A', 'https://example.com/a')
+        .addMessageAction('label B', 'text B')
+        .addPostbackAction('label C', 'data C')
+        .addPostbackAction('label D', 'data D', 'text D');
 
       expect(message.get()).toEqual({
         type: 'template',
